@@ -43,7 +43,7 @@ const CustomTooltip = ({ active, payload, label, suffix }: any) => {
     return (
       <div className="bg-card px-3 py-2 rounded-lg shadow-lg border border-border">
         <p className="text-xs text-muted-foreground mb-1">
-          {format(parseISO(label), 'MMM dd')}
+          {label}
         </p>
         <p className="text-sm font-semibold text-foreground">
           {payload[0].value}{suffix}
