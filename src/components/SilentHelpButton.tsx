@@ -57,7 +57,7 @@ export function SilentHelpButton({ className }: SilentHelpButtonProps) {
       <button
         onClick={() => setIsOpen(true)}
         className={cn(
-          "fixed bottom-24 right-4 z-40 flex items-center justify-center",
+          "fixed bottom-24 right-4 z-40 flex items-center justify-center lg:bottom-8 lg:right-8",
           "w-14 h-14 rounded-full bg-lavender shadow-lg",
           "transition-all duration-300 hover:scale-110",
           "animate-pulse-soft",

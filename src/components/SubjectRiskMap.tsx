@@ -35,7 +35,7 @@ export function SubjectRiskMap({ subjects, className }: SubjectRiskMapProps) {
         </h2>
       </div>
       
-      <div className="grid grid-cols-1 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {subjects.map((subject, index) => {
           const risk = getSubjectRisk(subject);
           const RiskIcon = riskIcons[risk];
