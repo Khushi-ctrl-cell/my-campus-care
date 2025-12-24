@@ -17,7 +17,7 @@ import {
   PlayCircle,
   FileText
 } from 'lucide-react';
-import { Header } from '@/components/Header';
+import { Header, DesktopHeader } from '@/components/Header';
 import { cn } from '@/lib/utils';
 import {
   Accordion,
@@ -169,10 +169,11 @@ export default function Tips() {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-24 lg:pb-8">
       <Header />
+      <DesktopHeader />
       
-      <main className="px-4 py-6 max-w-lg mx-auto">
+      <main className="px-4 lg:px-8 py-6 max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6 animate-fade-in">
           <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-mint">
@@ -184,8 +185,8 @@ export default function Tips() {
           </div>
         </div>
 
-        {/* Categories */}
-        <div className="space-y-4">
+        {/* Desktop: Grid Layout */}
+        <div className="lg:grid lg:grid-cols-2 lg:gap-6 space-y-4 lg:space-y-0">
           {categories.map((category, index) => {
             const Icon = category.icon;
             const styles = colorStyles[category.color];
@@ -196,7 +197,7 @@ export default function Tips() {
                 key={category.id}
                 className={cn(
                   "rounded-2xl overflow-hidden transition-all duration-300 animate-fade-in",
-                  `stagger-${index + 1}`
+                  isExpanded && "lg:col-span-2"
                 )}
               >
                 <button
@@ -235,32 +236,47 @@ export default function Tips() {
                     "p-4 border-2 border-t-0 rounded-b-2xl bg-card animate-fade-in",
                     styles.border
                   )}>
-                    <Accordion type="single" collapsible className="space-y-2">
-                      {category.tips.map((tip, tipIndex) => {
-                        const TipIcon = tip.icon;
-                        return (
-                          <AccordionItem
-                            key={tipIndex}
-                            value={`tip-${tipIndex}`}
-                            className="border-0"
-                          >
-                            <AccordionTrigger className="hover:no-underline p-3 rounded-xl bg-muted hover:bg-muted/80">
-                              <div className="flex items-center gap-3">
-                                <TipIcon className="w-4 h-4 text-muted-foreground" />
-                                <span className="font-medium text-sm text-left">
-                                  {tip.title}
-                                </span>
+                    <div className="lg:grid lg:grid-cols-3 lg:gap-4">
+                      <Accordion type="single" collapsible className="space-y-2 lg:contents">
+                        {category.tips.map((tip, tipIndex) => {
+                          const TipIcon = tip.icon;
+                          return (
+                            <AccordionItem
+                              key={tipIndex}
+                              value={`tip-${tipIndex}`}
+                              className="border-0 lg:block"
+                            >
+                              <AccordionTrigger className="hover:no-underline p-3 rounded-xl bg-muted hover:bg-muted/80 lg:hidden">
+                                <div className="flex items-center gap-3">
+                                  <TipIcon className="w-4 h-4 text-muted-foreground" />
+                                  <span className="font-medium text-sm text-left">
+                                    {tip.title}
+                                  </span>
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent className="px-3 pt-3 lg:hidden">
+                                <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+                                  {tip.content}
+                                </p>
+                              </AccordionContent>
+                              
+                              {/* Desktop: Always visible cards */}
+                              <div className="hidden lg:block p-4 rounded-xl bg-muted h-full">
+                                <div className="flex items-center gap-3 mb-3">
+                                  <TipIcon className="w-5 h-5 text-muted-foreground" />
+                                  <span className="font-medium text-sm">
+                                    {tip.title}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+                                  {tip.content}
+                                </p>
                               </div>
-                            </AccordionTrigger>
-                            <AccordionContent className="px-3 pt-3">
-                              <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
-                                {tip.content}
-                              </p>
-                            </AccordionContent>
-                          </AccordionItem>
-                        );
-                      })}
-                    </Accordion>
+                            </AccordionItem>
+                          );
+                        })}
+                      </Accordion>
+                    </div>
                   </div>
                 )}
               </div>

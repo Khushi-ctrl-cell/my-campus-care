@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Heart, Send, Sparkles } from 'lucide-react';
-import { Header } from '@/components/Header';
+import { Header, DesktopHeader } from '@/components/Header';
 import { EmojiSelector } from '@/components/EmojiSelector';
 import { SliderQuestion } from '@/components/SliderQuestion';
 import { WellBeingTips } from '@/components/WellBeingTips';
@@ -59,10 +59,11 @@ export default function CheckIn() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-24 lg:pb-8">
       <Header />
+      <DesktopHeader />
       
-      <main className="px-4 py-6 max-w-lg mx-auto">
+      <main className="px-4 lg:px-8 py-6 max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6 animate-fade-in">
           <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-lavender">
@@ -75,62 +76,70 @@ export default function CheckIn() {
         </div>
 
         {!submitted ? (
-          <div className="space-y-6 animate-fade-in">
-            {/* Mood */}
-            <div className="p-5 rounded-2xl bg-card soft-shadow">
-              <EmojiSelector
-                label="How's your mood today?"
-                value={mood}
-                onChange={setMood}
-                emojis={moodEmojis}
-                labels={moodLabels}
-              />
+          <div className="lg:grid lg:grid-cols-2 lg:gap-6 space-y-6 lg:space-y-0 animate-fade-in">
+            {/* Left Column */}
+            <div className="space-y-6">
+              {/* Mood */}
+              <div className="p-5 rounded-2xl bg-card soft-shadow">
+                <EmojiSelector
+                  label="How's your mood today?"
+                  value={mood}
+                  onChange={setMood}
+                  emojis={moodEmojis}
+                  labels={moodLabels}
+                />
+              </div>
+
+              {/* Stress */}
+              <div className="p-5 rounded-2xl bg-card soft-shadow">
+                <SliderQuestion
+                  label="Stress Level"
+                  value={stress}
+                  onChange={setStress}
+                  lowLabel="Relaxed"
+                  highLabel="Very Stressed"
+                />
+              </div>
             </div>
 
-            {/* Stress */}
-            <div className="p-5 rounded-2xl bg-card soft-shadow">
-              <SliderQuestion
-                label="Stress Level"
-                value={stress}
-                onChange={setStress}
-                lowLabel="Relaxed"
-                highLabel="Very Stressed"
-              />
+            {/* Right Column */}
+            <div className="space-y-6">
+              {/* Sleep */}
+              <div className="p-5 rounded-2xl bg-card soft-shadow">
+                <EmojiSelector
+                  label="How did you sleep last night?"
+                  value={sleep}
+                  onChange={setSleep}
+                  emojis={sleepEmojis}
+                  labels={sleepLabels}
+                />
+              </div>
+
+              {/* Motivation */}
+              <div className="p-5 rounded-2xl bg-card soft-shadow">
+                <EmojiSelector
+                  label="Motivation level for today"
+                  value={motivation}
+                  onChange={setMotivation}
+                  emojis={motivationEmojis}
+                  labels={motivationLabels}
+                />
+              </div>
             </div>
 
-            {/* Sleep */}
-            <div className="p-5 rounded-2xl bg-card soft-shadow">
-              <EmojiSelector
-                label="How did you sleep last night?"
-                value={sleep}
-                onChange={setSleep}
-                emojis={sleepEmojis}
-                labels={sleepLabels}
-              />
+            {/* Submit Button - Full Width */}
+            <div className="lg:col-span-2">
+              <Button 
+                onClick={handleSubmit}
+                className="w-full h-14 text-base font-semibold rounded-xl gap-2"
+              >
+                <Send className="w-5 h-5" />
+                Submit Check-In
+              </Button>
             </div>
-
-            {/* Motivation */}
-            <div className="p-5 rounded-2xl bg-card soft-shadow">
-              <EmojiSelector
-                label="Motivation level for today"
-                value={motivation}
-                onChange={setMotivation}
-                emojis={motivationEmojis}
-                labels={motivationLabels}
-              />
-            </div>
-
-            {/* Submit Button */}
-            <Button 
-              onClick={handleSubmit}
-              className="w-full h-14 text-base font-semibold rounded-xl gap-2"
-            >
-              <Send className="w-5 h-5" />
-              Submit Check-In
-            </Button>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="lg:grid lg:grid-cols-2 lg:gap-6 space-y-6 lg:space-y-0">
             {/* Success Message */}
             <div className={cn(
               "p-6 rounded-2xl bg-mint border-2 border-success/30 text-center animate-scale-in"
@@ -141,24 +150,26 @@ export default function CheckIn() {
               <h2 className="text-lg font-bold text-mint-foreground mb-2">
                 Thanks for checking in! 💙
               </h2>
-              <p className="text-sm text-mint-foreground/80">
+              <p className="text-sm text-mint-foreground/80 mb-4">
                 {mood >= 4 && stress <= 2
                   ? "You seem to be in a great state! Keep it up!"
                   : "Here are some gentle tips to help you today."}
               </p>
+              
+              {/* Update Button */}
+              <Button 
+                onClick={handleReset}
+                variant="outline"
+                className="w-full h-12 rounded-xl mt-4"
+              >
+                Update My Check-In
+              </Button>
             </div>
 
             {/* Tips */}
-            {lastRecord && <WellBeingTips record={lastRecord} />}
-
-            {/* Update Button */}
-            <Button 
-              onClick={handleReset}
-              variant="outline"
-              className="w-full h-12 rounded-xl"
-            >
-              Update My Check-In
-            </Button>
+            <div>
+              {lastRecord && <WellBeingTips record={lastRecord} />}
+            </div>
           </div>
         )}
       </main>

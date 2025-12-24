@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { TrendingUp, Calendar } from 'lucide-react';
-import { Header } from '@/components/Header';
+import { Header, DesktopHeader } from '@/components/Header';
 import { ProgressChart } from '@/components/ProgressChart';
 import { MoodChart } from '@/components/MoodChart';
 import { StressChart } from '@/components/StressChart';
@@ -40,10 +40,11 @@ export default function Progress() {
   const wellBeingData = getFilteredData(data.wellBeing);
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-24 lg:pb-8">
       <Header />
+      <DesktopHeader />
       
-      <main className="px-4 py-6 max-w-lg mx-auto">
+      <main className="px-4 lg:px-8 py-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6 animate-fade-in">
           <div className="flex items-center gap-3">
@@ -83,67 +84,73 @@ export default function Progress() {
           </div>
         </div>
 
-        {/* Charts */}
-        <div className="space-y-4">
-          {/* Focus Mode */}
-          <FocusMode subjects={data.subjects} className="animate-fade-in" />
-          
-          {/* Attendance Chart */}
-          <ProgressChart
-            title="Attendance"
-            data={attendanceData}
-            color="primary"
-            suffix="%"
-            className="animate-fade-in stagger-1"
-          />
+        {/* Desktop: Two Column Layout */}
+        <div className="lg:grid lg:grid-cols-2 lg:gap-8">
+          {/* Left Column */}
+          <div className="space-y-4">
+            {/* Focus Mode */}
+            <FocusMode subjects={data.subjects} className="animate-fade-in" />
+            
+            {/* Attendance Chart */}
+            <ProgressChart
+              title="Attendance"
+              data={attendanceData}
+              color="primary"
+              suffix="%"
+              className="animate-fade-in"
+            />
 
-          {/* Marks Chart */}
-          <ProgressChart
-            title="Average Internal Marks"
-            data={marksData}
-            color="lavender"
-            suffix="%"
-            className="animate-fade-in stagger-2"
-          />
-
-          {/* Mood Chart */}
-          <MoodChart 
-            data={wellBeingData}
-            className="animate-fade-in stagger-3"
-          />
-
-          {/* Stress Chart */}
-          <StressChart
-            data={wellBeingData}
-            className="animate-fade-in stagger-4"
-          />
-          
-          {/* Mood × Academics Correlation */}
-          <MoodAcademicsCorrelation
-            wellBeing={data.wellBeing}
-            attendance={data.attendance}
-            marks={data.marks}
-            className="animate-fade-in"
-          />
-          
-          {/* Weekly Reflection */}
-          <WeeklyReflection 
-            reflections={data.weeklyReflections}
-            className="animate-fade-in"
-          />
-
-          {/* Summary Card */}
-          <div className="p-4 rounded-2xl bg-mint border-2 border-success/20 animate-fade-in stagger-5">
-            <div className="flex items-center gap-3 mb-3">
-              <Calendar className="w-5 h-5 text-mint-foreground" />
-              <h3 className="font-semibold text-mint-foreground">Weekly Summary</h3>
+            {/* Marks Chart */}
+            <ProgressChart
+              title="Average Internal Marks"
+              data={marksData}
+              color="lavender"
+              suffix="%"
+              className="animate-fade-in"
+            />
+            
+            {/* Summary Card */}
+            <div className="p-4 rounded-2xl bg-mint border-2 border-success/20 animate-fade-in">
+              <div className="flex items-center gap-3 mb-3">
+                <Calendar className="w-5 h-5 text-mint-foreground" />
+                <h3 className="font-semibold text-mint-foreground">Weekly Summary</h3>
+              </div>
+              <p className="text-sm text-mint-foreground/80 leading-relaxed">
+                {attendanceData[attendanceData.length - 1]?.value >= 80 
+                  ? "Great attendance this week! Keep showing up — consistency builds success."
+                  : "Attendance needs a boost. Every class counts towards your goals!"
+                }
+              </p>
             </div>
-            <p className="text-sm text-mint-foreground/80 leading-relaxed">
-              {attendanceData[attendanceData.length - 1]?.value >= 80 
-                ? "Great attendance this week! Keep showing up — consistency builds success."
-                : "Attendance needs a boost. Every class counts towards your goals!"
-              }
-            </p>
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-4 mt-4 lg:mt-0">
+            {/* Mood Chart */}
+            <MoodChart 
+              data={wellBeingData}
+              className="animate-fade-in"
+            />
+
+            {/* Stress Chart */}
+            <StressChart
+              data={wellBeingData}
+              className="animate-fade-in"
+            />
+            
+            {/* Mood × Academics Correlation */}
+            <MoodAcademicsCorrelation
+              wellBeing={data.wellBeing}
+              attendance={data.attendance}
+              marks={data.marks}
+              className="animate-fade-in"
+            />
+            
+            {/* Weekly Reflection */}
+            <WeeklyReflection 
+              reflections={data.weeklyReflections}
+              className="animate-fade-in"
+            />
           </div>
         </div>
       </main>
