@@ -6,11 +6,17 @@ import { RiskBadge } from '@/components/RiskBadge';
 import { SummaryCard } from '@/components/SummaryCard';
 import { AssignmentsList } from '@/components/AssignmentsList';
 import { GoalProgress } from '@/components/GoalProgress';
+import { SubjectRiskMap } from '@/components/SubjectRiskMap';
+import { TodayCard } from '@/components/TodayCard';
+import { PositiveStreaks } from '@/components/PositiveStreaks';
+import { BalanceMeter } from '@/components/BalanceMeter';
+import { SilentHelpButton } from '@/components/SilentHelpButton';
 import { 
   getStudentData, 
   toggleAssignment, 
   calculateRiskLevel,
   getRiskMessage,
+  calculateBalanceMeter,
   StudentData 
 } from '@/lib/store';
 
@@ -28,6 +34,7 @@ export default function Home() {
   const pendingAssignments = data.assignments.filter(a => !a.completed).length;
   const riskLevel = calculateRiskLevel(data);
   const riskMessage = getRiskMessage(riskLevel, data);
+  const balanceData = calculateBalanceMeter(data);
 
   const handleToggleAssignment = (id: string) => {
     const updated = toggleAssignment(id);
@@ -81,6 +88,23 @@ export default function Home() {
             />
           </div>
         </section>
+
+        {/* Today at GGCT */}
+        <TodayCard schedule={data.todaySchedule} className="animate-fade-in" />
+        
+        {/* Subject Risk Map */}
+        <SubjectRiskMap subjects={data.subjects} className="animate-fade-in" />
+        
+        {/* Positive Streaks */}
+        <PositiveStreaks streaks={data.streaks} className="animate-fade-in" />
+        
+        {/* Balance Meter */}
+        <BalanceMeter 
+          score={balanceData.score}
+          status={balanceData.status}
+          breakdown={balanceData.breakdown}
+          className="animate-fade-in"
+        />
         
         {/* Assignments List */}
         <AssignmentsList 
@@ -88,6 +112,9 @@ export default function Home() {
           onToggle={handleToggleAssignment}
         />
       </main>
+      
+      {/* Silent Help Button */}
+      <SilentHelpButton />
     </div>
   );
 }

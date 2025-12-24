@@ -4,6 +4,9 @@ import { Header } from '@/components/Header';
 import { ProgressChart } from '@/components/ProgressChart';
 import { MoodChart } from '@/components/MoodChart';
 import { StressChart } from '@/components/StressChart';
+import { MoodAcademicsCorrelation } from '@/components/MoodAcademicsCorrelation';
+import { WeeklyReflection } from '@/components/WeeklyReflection';
+import { FocusMode } from '@/components/FocusMode';
 import { getStudentData, StudentData } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
@@ -82,6 +85,9 @@ export default function Progress() {
 
         {/* Charts */}
         <div className="space-y-4">
+          {/* Focus Mode */}
+          <FocusMode subjects={data.subjects} className="animate-fade-in" />
+          
           {/* Attendance Chart */}
           <ProgressChart
             title="Attendance"
@@ -111,6 +117,20 @@ export default function Progress() {
             data={wellBeingData}
             className="animate-fade-in stagger-4"
           />
+          
+          {/* Mood × Academics Correlation */}
+          <MoodAcademicsCorrelation
+            wellBeing={data.wellBeing}
+            attendance={data.attendance}
+            marks={data.marks}
+            className="animate-fade-in"
+          />
+          
+          {/* Weekly Reflection */}
+          <WeeklyReflection 
+            reflections={data.weeklyReflections}
+            className="animate-fade-in"
+          />
 
           {/* Summary Card */}
           <div className="p-4 rounded-2xl bg-mint border-2 border-success/20 animate-fade-in stagger-5">
@@ -120,8 +140,8 @@ export default function Progress() {
             </div>
             <p className="text-sm text-mint-foreground/80 leading-relaxed">
               {attendanceData[attendanceData.length - 1]?.value >= 80 
-                ? "Great attendance this week! Keep showing up — consistency builds success. 🌟"
-                : "Attendance needs a boost. Every class counts towards your goals! 💪"
+                ? "Great attendance this week! Keep showing up — consistency builds success."
+                : "Attendance needs a boost. Every class counts towards your goals!"
               }
             </p>
           </div>
