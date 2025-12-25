@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { CalendarDays, BarChart3, ClipboardList, Sparkles } from 'lucide-react';
 import { Header, DesktopHeader } from '@/components/Header';
 import { StudentProfileCard } from '@/components/StudentProfileCard';
-import { RiskBadge } from '@/components/RiskBadge';
+import { AIRiskBadge } from '@/components/AIRiskBadge';
 import { SummaryCard } from '@/components/SummaryCard';
 import { AssignmentsList } from '@/components/AssignmentsList';
 import { GoalProgress } from '@/components/GoalProgress';
@@ -14,8 +14,6 @@ import { SilentHelpButton } from '@/components/SilentHelpButton';
 import { 
   getStudentData, 
   toggleAssignment, 
-  calculateRiskLevel,
-  getRiskMessage,
   calculateBalanceMeter,
   StudentData 
 } from '@/lib/store';
@@ -32,8 +30,6 @@ export default function Home() {
   const latestAttendance = data.attendance[data.attendance.length - 1]?.percentage || 0;
   const latestMarks = data.marks[data.marks.length - 1]?.average || 0;
   const pendingAssignments = data.assignments.filter(a => !a.completed).length;
-  const riskLevel = calculateRiskLevel(data);
-  const riskMessage = getRiskMessage(riskLevel, data);
   const balanceData = calculateBalanceMeter(data);
 
   const handleToggleAssignment = (id: string) => {
@@ -54,7 +50,7 @@ export default function Home() {
             {/* Student Profile & Risk Badge Row */}
             <div className="lg:grid lg:grid-cols-2 lg:gap-6 space-y-6 lg:space-y-0">
               <StudentProfileCard profile={data.profile} />
-              <RiskBadge level={riskLevel} message={riskMessage} />
+              <AIRiskBadge />
             </div>
             
             {/* Quick Summary Cards */}
