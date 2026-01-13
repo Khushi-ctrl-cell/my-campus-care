@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getStudentData } from '@/lib/store';
+import { findStudentByRollNo, parseCIEMarks, ERPStudent } from '@/integrations/erp';
 
 export interface RiskAssessment {
   riskLevel: 'low' | 'medium' | 'high';
@@ -11,6 +12,7 @@ export interface RiskAssessment {
     risk: 'low' | 'medium' | 'high';
     reason: string;
   }>;
+  erpDataUsed?: boolean;
 }
 
 export function useRiskPrediction() {
@@ -31,17 +33,34 @@ export function useRiskPrediction() {
 
       const data = getStudentData();
       
-      // Calculate overall stats
-      const totalAttendance = data.subjects.reduce((acc, s) => acc + s.attendance, 0) / data.subjects.length;
-      const totalMarks = data.subjects.reduce((acc, s) => acc + s.internalMarks, 0) / data.subjects.length;
+      // Try to fetch ERP data for this student
+      let erpStudent: ERPStudent | null = null;
+      try {
+        erpStudent = await findStudentByRollNo(data.profile.rollNumber);
+      } catch (erpError) {
+        console.log('ERP data not available, using local data');
+      }
+      
+      // Calculate overall stats - use ERP data if available
+      let totalAttendance: number;
+      let totalMarks: number;
+      
+      if (erpStudent) {
+        totalAttendance = erpStudent.attendance;
+        totalMarks = parseCIEMarks(erpStudent.cie_marks);
+      } else {
+        totalAttendance = data.subjects.reduce((acc, s) => acc + s.attendance, 0) / data.subjects.length;
+        totalMarks = data.subjects.reduce((acc, s) => acc + s.internalMarks, 0) / data.subjects.length;
+      }
+      
       const pendingAssignments = data.assignments.filter(a => !a.completed).length;
 
       // Get latest well-being data
       const latestWellbeing = data.wellBeing.length > 0 ? data.wellBeing[data.wellBeing.length - 1] : null;
 
       const studentData = {
-        name: data.profile.name,
-        course: data.profile.course,
+        name: erpStudent?.name || data.profile.name,
+        course: erpStudent?.branch ? `B.Tech ${erpStudent.branch}` : data.profile.course,
         semester: data.profile.semester,
         subjects: data.subjects.map(s => ({
           name: s.name,
@@ -56,7 +75,8 @@ export function useRiskPrediction() {
           mood: latestWellbeing.mood,
           stress: latestWellbeing.stress,
           sleep: latestWellbeing.sleep
-        } : null
+        } : null,
+        erpStatus: erpStudent?.status || null
       };
 
       const { data: responseData, error: fnError } = await supabase.functions.invoke('predict-risk', {
@@ -71,8 +91,13 @@ export function useRiskPrediction() {
         throw new Error(responseData.error);
       }
 
-      setAssessment(responseData as RiskAssessment);
-      return responseData as RiskAssessment;
+      const result: RiskAssessment = {
+        ...responseData,
+        erpDataUsed: !!erpStudent
+      };
+      
+      setAssessment(result);
+      return result;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to predict risk';
       setError(message);
