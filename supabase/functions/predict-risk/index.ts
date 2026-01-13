@@ -15,9 +15,9 @@ interface SubjectData {
 }
 
 interface WellbeingData {
-  mood?: string;
-  stress?: string;
-  sleep?: string;
+  mood?: number;
+  stress?: number;
+  sleep?: number;
 }
 
 interface StudentData {
@@ -96,9 +96,9 @@ function validateStudentData(data: unknown): StudentData {
   if (obj.wellbeing && typeof obj.wellbeing === 'object') {
     const wb = obj.wellbeing as Record<string, unknown>;
     wellbeing = {
-      mood: wb.mood ? validateString(wb.mood, 'wellbeing.mood', 50) : undefined,
-      stress: wb.stress ? validateString(wb.stress, 'wellbeing.stress', 50) : undefined,
-      sleep: wb.sleep ? validateString(wb.sleep, 'wellbeing.sleep', 50) : undefined,
+      mood: wb.mood !== undefined ? validateNumber(wb.mood, 'wellbeing.mood', 1, 5) : undefined,
+      stress: wb.stress !== undefined ? validateNumber(wb.stress, 'wellbeing.stress', 1, 5) : undefined,
+      sleep: wb.sleep !== undefined ? validateNumber(wb.sleep, 'wellbeing.sleep', 1, 5) : undefined,
     };
   }
 
@@ -224,9 +224,9 @@ Average Marks: ${studentData.averageMarks}%
 Total Pending Assignments: ${studentData.totalPendingAssignments}
 
 Well-being Data:
-- Recent Mood: ${studentData.wellbeing?.mood || 'Not available'}
-- Stress Level: ${studentData.wellbeing?.stress || 'Not available'}
-- Sleep Quality: ${studentData.wellbeing?.sleep || 'Not available'}
+- Recent Mood: ${studentData.wellbeing?.mood !== undefined ? `${studentData.wellbeing.mood}/5` : 'Not available'}
+- Stress Level: ${studentData.wellbeing?.stress !== undefined ? `${studentData.wellbeing.stress}/5` : 'Not available'}
+- Sleep Quality: ${studentData.wellbeing?.sleep !== undefined ? `${studentData.wellbeing.sleep}/5` : 'Not available'}
 
 Provide a risk assessment with specific recommendations for this student.`;
 
