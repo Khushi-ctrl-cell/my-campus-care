@@ -1,6 +1,8 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Heart, BookOpen, TrendingUp, GraduationCap } from 'lucide-react';
+import { LayoutDashboard, Heart, BookOpen, TrendingUp, GraduationCap, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Home' },
@@ -11,6 +13,11 @@ const navItems = [
 
 export function Sidebar() {
   const location = useLocation();
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   return (
     <aside className="hidden lg:flex flex-col w-64 min-h-screen bg-card border-r border-border">
@@ -52,6 +59,35 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {/* User section */}
+      {user && (
+        <div className="p-4 border-t border-border">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <span className="text-sm font-semibold text-primary">
+                {user.email?.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">
+                {user.user_metadata?.full_name || 'Student'}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {user.email}
+              </p>
+            </div>
+          </div>
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-muted-foreground hover:text-destructive"
+            onClick={handleSignOut}
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="p-4 border-t border-border">
