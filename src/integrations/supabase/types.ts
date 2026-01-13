@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      mentor_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          id: string
+          mentor_id: string
+          notes: string | null
+          student_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          mentor_id: string
+          notes?: string | null
+          student_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          mentor_id?: string
+          notes?: string | null
+          student_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -50,6 +77,60 @@ export type Database = {
         }
         Relationships: []
       }
+      skills: {
+        Row: {
+          category: string | null
+          created_at: string
+          date_obtained: string | null
+          description: string | null
+          id: string
+          issuing_authority: string | null
+          title: string
+          type: string
+          updated_at: string
+          url: string | null
+          user_id: string
+          verification_notes: string | null
+          verification_status: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          date_obtained?: string | null
+          description?: string | null
+          id?: string
+          issuing_authority?: string | null
+          title: string
+          type: string
+          updated_at?: string
+          url?: string | null
+          user_id: string
+          verification_notes?: string | null
+          verification_status?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          date_obtained?: string | null
+          description?: string | null
+          id?: string
+          issuing_authority?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+          verification_notes?: string | null
+          verification_status?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -76,6 +157,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_verify_skills: { Args: { _user_id: string }; Returns: boolean }
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
