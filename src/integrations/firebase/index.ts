@@ -1,5 +1,7 @@
-// Firebase exports
-export { db } from './config';
+// Firebase exports (Mock Implementation)
+// To switch to real Firestore, update config.ts with your Firebase credentials
+// and update userService.ts to use real Firestore functions
+
 export { 
   createUser, 
   getUserById, 
@@ -9,3 +11,5 @@ export {
   deleteUser,
   type FirestoreUser 
 } from './userService';
+
+export { clearMockFirestore } from './mockFirestore';

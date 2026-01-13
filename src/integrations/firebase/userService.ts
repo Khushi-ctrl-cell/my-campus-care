@@ -1,21 +1,16 @@
-// Firestore User Service
-// Handles CRUD operations for the 'users' collection
+// Firestore User Service (Mock Implementation)
+// Uses localStorage to simulate Firestore behavior
+// Replace with real Firestore when you have Firebase credentials
 
 import { 
-  collection, 
-  doc, 
-  addDoc, 
-  getDoc, 
-  getDocs, 
-  updateDoc, 
-  deleteDoc,
-  query,
-  where,
-  Timestamp,
-  DocumentReference,
-  QuerySnapshot
-} from 'firebase/firestore';
-import { db } from './config';
+  mockAddDoc, 
+  mockGetDoc, 
+  mockGetDocs, 
+  mockUpdateDoc, 
+  mockDeleteDoc,
+  MockDocumentReference,
+  MockTimestamp
+} from './mockFirestore';
 
 // User interface matching the required fields
 export interface FirestoreUser {
@@ -23,26 +18,23 @@ export interface FirestoreUser {
   name: string;
   email: string;
   age: number;
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
+  createdAt?: MockTimestamp;
+  updatedAt?: MockTimestamp;
 }
 
-// Collection reference
+// Collection name
 const USERS_COLLECTION = 'users';
-const usersCollection = collection(db, USERS_COLLECTION);
 
 /**
- * Create a new user document in Firestore
+ * Create a new user document
  * @param userData - User data to insert
  * @returns The created document reference
  */
-export const createUser = async (userData: Omit<FirestoreUser, 'id' | 'createdAt' | 'updatedAt'>): Promise<DocumentReference> => {
+export const createUser = async (
+  userData: Omit<FirestoreUser, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<MockDocumentReference> => {
   try {
-    const docRef = await addDoc(usersCollection, {
-      ...userData,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now()
-    });
+    const docRef = await mockAddDoc(USERS_COLLECTION, userData);
     console.log('User created with ID:', docRef.id);
     return docRef;
   } catch (error) {
@@ -58,11 +50,10 @@ export const createUser = async (userData: Omit<FirestoreUser, 'id' | 'createdAt
  */
 export const getUserById = async (userId: string): Promise<FirestoreUser | null> => {
   try {
-    const docRef = doc(db, USERS_COLLECTION, userId);
-    const docSnap = await getDoc(docRef);
+    const result = await mockGetDoc<FirestoreUser>(USERS_COLLECTION, userId);
     
-    if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() } as FirestoreUser;
+    if (result.exists && result.data) {
+      return { id: result.id, ...result.data };
     }
     return null;
   } catch (error) {
@@ -78,12 +69,10 @@ export const getUserById = async (userId: string): Promise<FirestoreUser | null>
  */
 export const getUserByEmail = async (email: string): Promise<FirestoreUser | null> => {
   try {
-    const q = query(usersCollection, where('email', '==', email));
-    const querySnapshot = await getDocs(q);
+    const results = await mockGetDocs<FirestoreUser>(USERS_COLLECTION, { field: 'email', value: email });
     
-    if (!querySnapshot.empty) {
-      const doc = querySnapshot.docs[0];
-      return { id: doc.id, ...doc.data() } as FirestoreUser;
+    if (results.length > 0) {
+      return { id: results[0].id, ...results[0].data };
     }
     return null;
   } catch (error) {
@@ -98,11 +87,8 @@ export const getUserByEmail = async (email: string): Promise<FirestoreUser | nul
  */
 export const getAllUsers = async (): Promise<FirestoreUser[]> => {
   try {
-    const querySnapshot: QuerySnapshot = await getDocs(usersCollection);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as FirestoreUser[];
+    const results = await mockGetDocs<FirestoreUser>(USERS_COLLECTION);
+    return results.map(({ id, data }) => ({ id, ...data }));
   } catch (error) {
     console.error('Error getting all users:', error);
     throw new Error(`Failed to get users: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -119,11 +105,7 @@ export const updateUser = async (
   updates: Partial<Omit<FirestoreUser, 'id' | 'createdAt'>>
 ): Promise<void> => {
   try {
-    const docRef = doc(db, USERS_COLLECTION, userId);
-    await updateDoc(docRef, {
-      ...updates,
-      updatedAt: Timestamp.now()
-    });
+    await mockUpdateDoc(USERS_COLLECTION, userId, updates);
     console.log('User updated:', userId);
   } catch (error) {
     console.error('Error updating user:', error);
@@ -137,8 +119,7 @@ export const updateUser = async (
  */
 export const deleteUser = async (userId: string): Promise<void> => {
   try {
-    const docRef = doc(db, USERS_COLLECTION, userId);
-    await deleteDoc(docRef);
+    await mockDeleteDoc(USERS_COLLECTION, userId);
     console.log('User deleted:', userId);
   } catch (error) {
     console.error('Error deleting user:', error);
