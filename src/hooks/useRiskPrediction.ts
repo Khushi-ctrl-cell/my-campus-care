@@ -23,6 +23,12 @@ export function useRiskPrediction() {
     setError(null);
 
     try {
+      // Check if user is authenticated
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        throw new Error('Authentication required. Please log in to use AI risk prediction.');
+      }
+
       const data = getStudentData();
       
       // Calculate overall stats

@@ -1,9 +1,118 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema (manual validation since we can't import zod in edge functions)
+interface SubjectData {
+  name: string;
+  attendance: number;
+  marks: number;
+  pendingAssignments: number;
+}
+
+interface WellbeingData {
+  mood?: string;
+  stress?: string;
+  sleep?: string;
+}
+
+interface StudentData {
+  name: string;
+  course: string;
+  semester: number;
+  subjects: SubjectData[];
+  overallAttendance: number;
+  averageMarks: number;
+  totalPendingAssignments: number;
+  wellbeing?: WellbeingData;
+}
+
+function validateString(value: unknown, fieldName: string, maxLength: number = 100): string {
+  if (typeof value !== 'string') {
+    throw new Error(`${fieldName} must be a string`);
+  }
+  if (value.length === 0) {
+    throw new Error(`${fieldName} cannot be empty`);
+  }
+  if (value.length > maxLength) {
+    throw new Error(`${fieldName} must be less than ${maxLength} characters`);
+  }
+  // Sanitize: remove potentially dangerous characters for prompt injection
+  return value.replace(/[<>{}]/g, '').trim();
+}
+
+function validateNumber(value: unknown, fieldName: string, min: number = 0, max: number = 100): number {
+  if (typeof value !== 'number' || isNaN(value)) {
+    throw new Error(`${fieldName} must be a number`);
+  }
+  if (value < min || value > max) {
+    throw new Error(`${fieldName} must be between ${min} and ${max}`);
+  }
+  return value;
+}
+
+function validateStudentData(data: unknown): StudentData {
+  if (!data || typeof data !== 'object') {
+    throw new Error('Student data must be an object');
+  }
+
+  const obj = data as Record<string, unknown>;
+
+  // Validate required fields
+  const name = validateString(obj.name, 'name');
+  const course = validateString(obj.course, 'course');
+  const semester = validateNumber(obj.semester, 'semester', 1, 10);
+  const overallAttendance = validateNumber(obj.overallAttendance, 'overallAttendance', 0, 100);
+  const averageMarks = validateNumber(obj.averageMarks, 'averageMarks', 0, 100);
+  const totalPendingAssignments = validateNumber(obj.totalPendingAssignments, 'totalPendingAssignments', 0, 50);
+
+  // Validate subjects array
+  if (!Array.isArray(obj.subjects)) {
+    throw new Error('subjects must be an array');
+  }
+  if (obj.subjects.length > 20) {
+    throw new Error('subjects array cannot exceed 20 items');
+  }
+
+  const subjects: SubjectData[] = obj.subjects.map((subject: unknown, index: number) => {
+    if (!subject || typeof subject !== 'object') {
+      throw new Error(`subjects[${index}] must be an object`);
+    }
+    const subj = subject as Record<string, unknown>;
+    return {
+      name: validateString(subj.name, `subjects[${index}].name`),
+      attendance: validateNumber(subj.attendance, `subjects[${index}].attendance`, 0, 100),
+      marks: validateNumber(subj.marks, `subjects[${index}].marks`, 0, 100),
+      pendingAssignments: validateNumber(subj.pendingAssignments, `subjects[${index}].pendingAssignments`, 0, 50),
+    };
+  });
+
+  // Validate optional wellbeing data
+  let wellbeing: WellbeingData | undefined;
+  if (obj.wellbeing && typeof obj.wellbeing === 'object') {
+    const wb = obj.wellbeing as Record<string, unknown>;
+    wellbeing = {
+      mood: wb.mood ? validateString(wb.mood, 'wellbeing.mood', 50) : undefined,
+      stress: wb.stress ? validateString(wb.stress, 'wellbeing.stress', 50) : undefined,
+      sleep: wb.sleep ? validateString(wb.sleep, 'wellbeing.sleep', 50) : undefined,
+    };
+  }
+
+  return {
+    name,
+    course,
+    semester,
+    subjects,
+    overallAttendance,
+    averageMarks,
+    totalPendingAssignments,
+    wellbeing,
+  };
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -11,14 +120,79 @@ serve(async (req) => {
   }
 
   try {
-    const { studentData } = await req.json();
+    // Authentication check
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      console.error('Missing or invalid Authorization header');
+      return new Response(JSON.stringify({ error: 'Unauthorized - missing authentication' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Validate JWT using Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error('JWT validation failed:', claimsError);
+      return new Response(JSON.stringify({ error: 'Unauthorized - invalid token' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const userId = claimsData.claims.sub;
+    console.log('Authenticated user:', userId);
+
+    // Parse and validate request body
+    let requestBody: unknown;
+    try {
+      requestBody = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: 'Invalid JSON in request body' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!requestBody || typeof requestBody !== 'object') {
+      return new Response(JSON.stringify({ error: 'Request body must be an object' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { studentData: rawStudentData } = requestBody as { studentData: unknown };
+
+    // Validate student data
+    let studentData: StudentData;
+    try {
+      studentData = validateStudentData(rawStudentData);
+    } catch (validationError) {
+      console.error('Validation error:', validationError);
+      return new Response(JSON.stringify({ 
+        error: `Validation error: ${validationError instanceof Error ? validationError.message : 'Invalid data'}` 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log("Analyzing student data for risk prediction:", JSON.stringify(studentData));
+    console.log("Analyzing student data for risk prediction (user:", userId, "):", JSON.stringify(studentData));
 
     const systemPrompt = `You are an AI student risk assessment system for GGCT (Government Girls College of Technology). 
 Analyze the student's academic data and predict their risk level.
@@ -43,7 +217,7 @@ Course: ${studentData.course}
 Semester: ${studentData.semester}
 
 Subject Performance:
-${studentData.subjects.map((s: any) => `- ${s.name}: Attendance ${s.attendance}%, Marks ${s.marks}%, Pending Assignments: ${s.pendingAssignments}`).join('\n')}
+${studentData.subjects.map((s) => `- ${s.name}: Attendance ${s.attendance}%, Marks ${s.marks}%, Pending Assignments: ${s.pendingAssignments}`).join('\n')}
 
 Overall Attendance: ${studentData.overallAttendance}%
 Average Marks: ${studentData.averageMarks}%
@@ -133,7 +307,7 @@ Provide a risk assessment with specific recommendations for this student.`;
   }
 });
 
-function calculateFallbackRisk(studentData: any) {
+function calculateFallbackRisk(studentData: StudentData) {
   const attendance = studentData.overallAttendance || 75;
   const marks = studentData.averageMarks || 60;
   const pending = studentData.totalPendingAssignments || 0;
@@ -163,7 +337,7 @@ function calculateFallbackRisk(studentData: any) {
     riskLevel,
     explanation,
     recommendations,
-    subjectRisks: studentData.subjects?.map((s: any) => ({
+    subjectRisks: studentData.subjects?.map((s) => ({
       subject: s.name,
       risk: s.attendance < 60 || s.marks < 40 ? "high" : s.attendance < 75 || s.marks < 60 ? "medium" : "low",
       reason: s.attendance < 75 ? "Low attendance" : s.marks < 60 ? "Low marks" : "Good performance"
